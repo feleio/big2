@@ -73,27 +73,30 @@ class Hand:
         if isConsecutive:
             # royal frush
             if isSameSuit:
-                fiveCardRank = 5
+                self.fiveCardRank = 5
             # straight
             else:
-                fiveCardRank = 1
+                self.fiveCardRank = 1
         else:
             # frush
             if isSameSuit:
-                fiveCardRank = 2
+                self.fiveCardRank = 2
             else:
                 raise Exception('validate Straight or Flush failed')
 
     def __validateFull4Kind(self, numStatKeys):
-        if ( numStatKeys[0] + numStatKeys[1] ) != 5:
+        group1NumCount = self.numStat[numStatKeys[0]]
+        group2NumCount = self.numStat[numStatKeys[1]]
+
+        if ( group1NumCount + group2NumCount ) != 5:
             raise Exception('validate full or 4 kind failed')
 
         # full house
-        if numStatKeys[0] == 2 or numStatKeys[0] == 3:
-            fiveCardRank = 3
+        if group1NumCount == 2 or group1NumCount == 3:
+            self.fiveCardRank = 3
         # four of a kind
-        elif numStatKeys[0] == 1 or numStatKeys[0] == 4:
-            fiveCardRank = 4
+        elif group1NumCount == 1 or group1NumCount == 4:
+            self.fiveCardRank = 4
 
     def __isConsecutive(self):
         # cards is sorted by their num
