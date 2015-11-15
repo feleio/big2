@@ -71,14 +71,14 @@ class Hand:
         isSameSuit = ( len(self.suitStat) == 1 )
 
         if isConsecutive:
-            # royal frush
+            # royal flush
             if isSameSuit:
                 self.fiveCardRank = 5
             # straight
             else:
                 self.fiveCardRank = 1
         else:
-            # frush
+            # flush
             if isSameSuit:
                 self.fiveCardRank = 2
             else:
@@ -150,44 +150,44 @@ class Hand:
         if self.fiveCardRank == hand.fiveCardRank:
             # straight
             if self.fiveCardRank == 1:
-                return __winStraight(hand)
+                return self.__winStraight(hand)
             # flush
             elif self.fiveCardRank == 2:
-                return __winFlush(hand)
+                return self.__winFlush(hand)
 
             # full house
             elif self.fiveCardRank == 3:
-                return __winFullHouse(hand)
+                return self.__winFullHouse(hand)
 
             # four kind
             elif self.fiveCardRank == 4:
-                return __win4Kind(hand)
+                return self.__win4Kind(hand)
 
             # royal flush
             elif self.fiveCardRank == 5:
-                return __winRFrush(hand)
+                return self.__winRFlush(hand)
         else:
             return self.fiveCardRank > hand.fiveCardRank
 
     def __winStraight(self, hand):
-        return __getStraightRank(self.cards) > __getStraightRank(hand.cards)
+        return self.__getStraightRank(self.cards) > self.__getStraightRank(hand.cards)
 
-    def __winFrush(self, hand):
-        for i in reversed(range(0,4)):
+    def __winFlush(self, hand):
+        for i in reversed(range(0,5)):
             if self.cards[i].num != hand.cards[i].num:
                 return self.cards[i].num > hand.cards[i].num
 
         return self.cards[i].suit > hand.cards[i].suit
 
     def __winFullHouse(self, hand):
-        return __getSameKindNum(self.numStat, 3) > __getSameKindNum(hand.numStat, 3)
+        return self.__getSameKindNum(self.numStat, 3) > self.__getSameKindNum(hand.numStat, 3)
 
     def __win4Kind(self, hand):
-        return __getSameKindNum(self.numStat, 4) > __getSameKindNum(hand.numStat, 4)
+        return self.__getSameKindNum(self.numStat, 4) > self.__getSameKindNum(hand.numStat, 4)
 
-    def __winRFrush(self, hand):
-        selfRank = __getStraightRank(self.cards)
-        handRank = __getStraightRank(hand.cards)
+    def __winRFlush(self, hand):
+        selfRank = self.__getStraightRank(self.cards)
+        handRank = self.__getStraightRank(hand.cards)
 
         if selfRank == handRank:
             return self.cards[0].suit > hand.cards[0].suit
