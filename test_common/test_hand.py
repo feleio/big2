@@ -1,8 +1,11 @@
 import unittest
+import logging
 from common.hand import Hand
 from common.card import Card
 
 class HandTestCase(unittest.TestCase):
+    log= logging.getLogger( "common.hand.HandTestCase" )
+
     def test_validatePair(self):
         # validate ok
         try:

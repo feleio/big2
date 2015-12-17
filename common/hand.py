@@ -15,7 +15,13 @@ logging.getLogger( "common.hand" ).setLevel( logging.DEBUG )
 class Hand:
     __log = logging.getLogger( "common.hand" )
 
+    toCharacter = {3:'3', 4:'4', 5:'5', 6:'6', 7:'7', 8:'8', 9:'9', 10:'10',
+        11:'J', 12:'Q', 13:'K', 21:'A', 22:'2'}
+
+    toSuit = {1:u'\u2666', 2:u'\u2663', 3:u'\u2665', 4:u'\u2660'}
+
     def __init__(self, cards):
+        self.originalCards = []
         self.cards = []
         self.cardCount = 0
         self.fiveCardRank = 0
@@ -26,10 +32,20 @@ class Hand:
         self.suitStat = defaultdict(int)
         self.numStat = defaultdict(int)
 
-        self.cards = cards
+        self.originalCards = cards[:]
+        self.cards = cards[:]
         self.cardCount = len(cards)
         self.__calStat(cards)
         self.__validate(cards)
+
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+
+    def __unicode__(self):
+        result = ''
+        for card in self.cards:
+            result += ( '%s%s ' % ( Hand.toSuit[card.suit], Hand.toCharacter[card.num]) )
+        return result
 
     # cal count of suit and num
     def __validate(self, cards):
