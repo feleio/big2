@@ -6,6 +6,8 @@ from card import Card
 from hand import Hand
 from collections import defaultdict
 
+logging.getLogger( "common.simpleFelix" ).level = logging.DEBUG
+
 class Player:
     __log = logging.getLogger( "common.player" )
 
@@ -31,18 +33,32 @@ class SimpleFelix(Player):
         self.highs = []
         self.Pairs = []
         self.threeKinds = []
-        self.fiveHands = []
+        self.fiveCardHands = []
+
+        self.fourKindsTemp = []
 
     def deal(self, cards):
         Player.deal(self, cards)
         self.cards = cards[:]
 
         self.highs = []
-        self.Pairs = []
+        self.pairs = []
         self.threeKinds = []
         self.fiveCardHands = []
 
+        self.fourKindsTemp = []
+
         self.__findRFlush()
+        self.__findAllTwo()
+        self.__find4Kind()
+        self.__findFullHouse()
+        self.__findAcePairs()
+        self.__findFlush()
+        self.__findStright()
+        self.__findHandsForKind()
+        self.__findPairs()
+        self.__findHighs()
+
 
     def play(self, playHistory):
         pass
@@ -54,25 +70,198 @@ class SimpleFelix(Player):
         pass
 
     def __findRFlush(self):
-        self.suitDict = defaultdict(list)
-        self.numDict = defaultdict(list)
+        suitDict = defaultdict(list)
 
         for card in self.cards:
-            self.suitDict[card.suit].append(card)
+            suitDict[card.suit].append(card)
 
-        for suit in self.suitDict.keys():
-            if len(self.suitDict[suit]) >= 5:
-                cardsInSuit = self.suitDict[suit]
+        for suit in suitDict.keys():
+            if len(suitDict[suit]) >= 5:
+                cardsInSuit = suitDict[suit]
                 cardsInSuit.sort(key=lambda x: x.num)
-                foundHands = self.__findStrightHands(cardsInSuit)
+
+                foundHands = []
+
+                foundStrightContinues = self.__findStrightContinues(cardsInSuit)
+                for foundContinCards in foundStrightContinues:
+                    if foundContinCards[0].num == 21 or foundContinCards[0].num == 22 or foundContinCards[0].num == 10:
+                        foundHands.append(Hand(foundContinCards))
+                    else:
+                        while len(foundContinCards) >= 5:
+                            foundHands.append(Hand(foundContinCards[-5:]))
+                            self.__removeFromCards(foundContinCards, foundContinCards[-5:])
 
                 for foundHand in foundHands:
                     self.__addToHands(self.fiveCardHands, foundHand)
-                    self.__removeFromCards(self.cards, foundHand)
+                    self.__removeFromCards(self.cards, foundHand.cards)
 
 
-    def __findStrightHands(self, cards):
-        foundHands = []
+    def __findAllTwo(self):
+        for card in self.cards:
+            if card.num == 22:
+                self.__addToHands(self.highs, Hand(card))
+                self.__removeFromCards(self.cards, [card])
+
+    def __find4Kind(self):
+        numDict = defaultdict(list)
+
+        for card in self.cards:
+            numDict[card.num].append(card)
+
+        for num in reversed(sorted(numDict.keys())):
+            if len(numDict[num]) == 4 and len(self.fourKindsTemp) < 2:
+                self.fourKindsTemp.append(numDict[num])
+                self.__removeFromCards(self.cards, numDict[num])
+
+    def __findFullHouse(self):
+        numDict = defaultdict(list)
+
+        for card in self.cards:
+            numDict[card.num].append(card)
+
+        threeKinds = []
+        pairs = []
+
+        for num in reversed(sorted(numDict.keys())):
+            if len(numDict[num]) >= 3:
+                threeKinds.append(numDict[num][0:-1])
+
+        for num in sorted(numDict.keys()):
+            if len(numDict[num]) == 2:
+                if len(pairs) < len(threeKinds):
+                    pairs.append(numDict[num])
+                else:
+                    break
+
+        for i in range(len(threeKinds)):
+            threeKind = threeKinds[i]
+            if i < len(paris):
+                pair = paris[i]
+                fullHouseHand = Hand(threeKind + pair)
+                self.__addToHands(self.fiveCardHands, fullHouseHand)
+                self.__removeFromCards(self.cards, fullHouseHand.cards)
+            else:
+                threeKindHand = Hand(threeKind)
+                self.__addToHands(self.fiveCardHands, threeKindHand)
+                self.__removeFromCards(self.cards, threeKindHand.cards)
+
+    def __findAcePairs(self):
+        aceCards = []
+        for card in self.cards:
+            if card.num == 21:
+                aceCards.append(card)
+
+        aceCards.sort(key=lambda x: x.suit)
+        while len(aceCards) > 1:
+            acePair = [aceCards[0], aceCards[-1]]
+            self.__addToHands(self.pairs, Hand(acePair))
+            self.__removeFromCards(self.cards, acePair)
+            self.__removeFromCards(aceCards, acePair)
+
+    def __findFlush(self):
+        suitDict = defaultdict(list)
+
+        for card in self.cards:
+            suitDict[card.suit].append(card)
+
+        for suit in suitDict.keys():
+            if len(suitDict[suit]) >= 5:
+                cardsInSuit = suitDict[suit]
+                cardsInSuit.sort(key=lambda x: x.num)
+                flushHands = []
+
+                if len(suitDict[suit]) >= 10:
+                    flushHands.append(Hand(cardsInSuit[0:4] + cardsInSuit[-2:-1]))
+                    flushHands.append(Hand(cardsInSuit[4:8] + cardsInSuit[-1:]))
+                else:
+                    print cardsInSuit[0:4] + cardsInSuit[-1:]
+                    flushHands.append(Hand(cardsInSuit[0:4] + cardsInSuit[-1:]))
+
+                for flushHand in flushHands:
+                    self.__addToHands(self.fiveCardHands, flushHand)
+                    self.__removeFromCards(self.cards, flushHand.cards)
+
+    def __findStright(self):
+        strightCardsList = self.__findStrightContinues(self.__getUniqueNumCards(cards))
+
+        while strightCardsList:
+            for strightCards in strightCardsList:
+                if strightCards[0].num == 21 or strightCards[0].num == 22 or strightCards[0].num == 10:
+                    self.__addToHands(self.fiveCardHands, Hand(strightCards))
+                    self.__removeFromCards(self.cards, strightCards)
+                else:
+                    while len(strightCards) >= 5:
+                        self.__addToHands(self.fiveCardHands, Hand(strightCards[-5:]))
+                        self.__removeFromCards(self.cards, strightCards[-5:])
+                        self.__removeFromCards(foundContinCards, strightCards[-5:])
+
+            strightCardsList = self.__findStrightContinues(self.__getUniqueNumCards(cards))
+
+    def __findPairs(self):
+        numDict = defaultdict(list)
+
+        for card in self.cards:
+            numDict[card.num].append(card)
+
+        for num in reversed(numDict.keys()):
+            if len(numDict[num]) == 2:
+                self.__addToHands(self.pairs, Hand(numDict[num]))
+                self.__removeFromCards(self.cards, numDict[num])
+
+    def __findHighs(self):
+        for card in self.cards:
+            self.__addToHands(self.highs, Hand([card]))
+            self.__removeFromCards(self.cards, [card])
+
+
+    def __getUniqueNumCards(self, cards):
+        numDict = defaultdict(list)
+
+        for card in self.cards:
+            numDict[card.num].append(card)
+
+        uniqueNumCards = []
+        for num in sorted(numDict.keys()):
+            uniqueNumCards.append(numDict[num][0])
+
+        return uniqueNumCards
+
+    def __findSingleForFourKinds(self):
+        numDict = defaultdict(list)
+
+        for card in self.cards:
+            numDict[card.num].append(card)
+
+        for fourKind in self.fourKindsTemp:
+            singleCard = self.__grapSingleCardFromExistingHands()
+            self.__addToHands(self.fourKinds, Hand( fourKind + [singleCard]))
+
+
+    def __grapSingleCardFromExistingHands(self):
+        if len(self.highs) > 0:
+            singleCardHand = self.highs[0]
+            singleCard = singleCardHand.cards[0]
+            self.highs.remove(singleCard)
+            return singleCard
+
+        if len(self.pairs) > 0:
+            pairHand = self.pairs[0]
+            singleCard = pairHand.cards[0]
+            self.__addToHands(self.highs, Hand(pairHand.cards[0]))
+            self.pairs.remove(singleCard)
+            return singleCard
+
+        if len(self.threeKinds) > 0:
+            threeKindsHand = self.threeKinds[0]
+            singleCard = threeKindsHand.cards[0]
+            self.__addToHands(self.pairs, Hand(threeKindsHand.cards[1:]))
+            self.threeKinds.remove(threeKindsHand)
+            return singleCard
+
+        raise Exception('cannot grap single card for 4 kinds')
+
+    def __findStrightContinues(self, cards):
+        foundContinueCardsList = []
 
         if len(cards) >= 5 :
             # 21, 22, 3, 4, 5 or 22, 3, 4, 5, 6 or 10, 11, 12, 13 ,21 
@@ -80,54 +269,51 @@ class SimpleFelix(Player):
                 if (cards[0].num== 3 and cards[1].num== 4 and cards[2].num== 5):
                     if cards[-2].num == 21:
                         #21, 22, 3, 4, 5
-                        foundHands.append(Hand([cards[-1], cards[-2], cards[0], cards[1], cards[2]]))
-                        self.__removeFromCards(cards, foundHands[-1])
+                        foundContinueCardsList.append([cards[-1], cards[-2], cards[0], cards[1], cards[2]])
+                        self.__removeFromCards(cards, foundContinueCardsList[-1])
                     elif cards[3].num == 6:
                         #22, 3, 4, 5, 6
-                        foundHands.append(Hand([cards[-1], cards[0], cards[1], cards[2], cards[3]]))
-                        self.__removeFromCards(cards, foundHands[-1])
+                        foundContinueCardsList.append([cards[-1], cards[0], cards[1], cards[2], cards[3]])
+                        self.__removeFromCards(cards, foundContinueCardsList[-1])
                 else:
                     if cards[-2].num == 21 and len(cards) >= 6: 
-                        print cards
                         if (cards[-6].num == 10 and 
                             cards[-5].num == 11 and 
                             cards[-4].num == 12 and 
                             cards[-3].num == 13 ):
                             #10, 11, 12, 13 ,21
-                            foundHands.append(Hand([cards[-2], cards[-3], cards[-4], cards[-5], cards[-6]]))
-                            self.__removeFromCards(cards, foundHands[-1])
+                            foundContinueCardsList.append([cards[-6], cards[-5], cards[-4], cards[-3], cards[-2]])
+                            self.__removeFromCards(cards, foundContinueCardsList[-1])
             elif cards[-1].num == 21: 
                 if (cards[-5].num == 10 and 
                     cards[-4].num == 11 and 
                     cards[-3].num == 12 and 
                     cards[-2].num == 13 ):
                     #10, 11, 12, 13 ,21
-                    foundHands.append(Hand([cards[-1], cards[-2], cards[-3], cards[-4], cards[-5]]))
-                    self.__removeFromCards(cards, foundHands[-1])
+                    foundContinueCardsList.append([cards[-5], cards[-4], cards[-3], cards[-2], cards[-1]])
+                    self.__removeFromCards(cards, foundContinueCardsList[-1])
 
             #other stright
-            while len(cards) >= 5:
-                continues = self.__findContinues(list(card.num for card in cards))
-                if continues:
-                    largestContinues = continues[-1]
-                    foundHands.append(Hand(cards[largestContinues[1] - 5 : largestContinues[1]]))
-                    self.__removeFromCards(cards, foundHands[-1])
-                else:
-                    break
+            continues = self.__findContinues(list(card.num for card in cards))
+            for contin in continues:
+                resultContin = []
+                for i in range(contin[0], contin[1]):
+                    resultContin.append(cards[i])
+                foundContinueCardsList.append(resultContin)
 
-        return foundHands
+        return foundContinueCardsList        
 
     def __addToHands(self, hands, hand):
-        if not hands:
-            hands.append(hand)
-        else:
+        if hands:
             for i in range(len(hands)):
                 if not hand.win(hands[i]):
                     hands.insert(i, hand)
-                    break
+                    return
 
-    def __removeFromCards(self, cards, hand):
-        for card in hand.cards:
+        hands.append(hand)
+
+    def __removeFromCards(self, cards, removeCards):
+        for card in removeCards:
             cards.remove(card)
 
     def __findContinues(self, nums):
@@ -174,8 +360,7 @@ def createCards(*arg):
 if __name__ == '__main__':
     s = SimpleFelix()
     #cards = createCards(1,22, 3,22, 1,21, 2,21, 4,5, 3,5, 1,6, 1,7, 2,7, 2,11, 3,11, 1,11, 4,13)
-    cards = createCards(2,21, 2,22, 2,3, 2,4, 2,5, 2,6, 2,7, 2,8, 2,9, 2,10, 2,11, 2,12, 2,13)
+    #cards = createCards(2,21, 2,22, 2,3, 2,4, 2,5, 2,6, 2,7, 2,8, 2,9, 2,10, 2,11, 2,12, 2,13)
+    cards = createCards(2,21, 1,3, 2,3, 3,3, 4,3, 1,4, 2,4, 3,4, 4,4, 2,6, 2,7, 2,8, 1,8)
 
     s.deal(cards)
-    for hand in s.fiveCardHands:
-        print( hand )

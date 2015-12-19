@@ -25,4 +25,5 @@ class Card:
     def __unicode__(self):
         return ( '%s%s' % ( Card.toSuit[self.suit], Card.toCharacter[self.num]) )
 
+    
 
