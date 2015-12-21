@@ -1,0 +1,2 @@
+when find flush, try skip for pair K or pair Q
+when find full house, try skip pair for flush, pick other pair if possible

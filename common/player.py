@@ -5,8 +5,10 @@ import os
 from card import Card
 from hand import Hand
 from collections import defaultdict
+from sets import Set
 
-logging.getLogger( "common.simpleFelix" ).level = logging.DEBUG
+logging.basicConfig( stream=sys.stderr )
+logging.getLogger( "common.simpleFelix" ).setLevel( logging.DEBUG )
 
 class Player:
     __log = logging.getLogger( "common.player" )
@@ -15,7 +17,7 @@ class Player:
         self.cards = []
 
     def deal(self, cards):
-        self.HodingCards = cards[:]
+        self.holdingCards = cards[:]
 
     def play(self, playHistory):
         pass
@@ -31,11 +33,87 @@ class SimpleFelix(Player):
     def __init__(self):
         Player.__init__(self)
         self.highs = []
-        self.Pairs = []
+        self.pairs = []
         self.threeKinds = []
         self.fiveCardHands = []
 
         self.fourKindsTemp = []
+
+    def __str__(self):
+        return unicode(self).encode('utf-8')
+
+    def __unicode__(self):
+        result = '\n'
+        result += '\nself.highs:\n'
+        for hand in self.highs:
+            result +=  unicode(hand) + '\n'
+
+        result += '\nself.pairs:\n'
+        for hand in self.pairs:
+            result +=  unicode(hand) + '\n'
+
+        result += '\nself.threeKinds:\n'
+        for hand in self.threeKinds:
+            result +=  unicode(hand) + '\n'
+            
+        result += '\nself.fiveCardHands:\n'
+        for hand in self.fiveCardHands:
+            result +=  unicode(hand) + '\n'
+            
+        result += '\ncards:\n'
+        result +=  ', '.join(unicode(x) for x in self.cards) + '\n'
+
+        result += '\nholding cards:\n'
+        result +=  ', '.join(unicode(x) for x in self.holdingCards) + '\n'
+
+        result += '\ncards Stat:\n'
+
+        suitDict = defaultdict(list)
+        numDict = defaultdict(list)
+
+        for card in self.holdingCards:
+            suitDict[card.suit].append(card)
+            numDict[card.num].append(card)
+
+        result += '\nsuit Stat:\n'
+        for suit in range (1,5):
+            result += '%s : %s' % (suit , unicode(', '.join(unicode(x) for x in suitDict[suit])))  + '\n'
+
+        result += '\nnum Stat:\n'
+        for num in sorted(numDict.keys()):
+            result += '%s : %s' % (num, ', '.join(unicode(x) for x in numDict[num])) + '\n'
+
+        return result
+
+    def dumpTestAssert(self):
+        lenTemplate = '        self.assertEquals(len(player.%s), %s )\n'
+        handsTemplate = '        self.assertTrue(self.__checkCards(player.%s[%s].cards, self.__createCards(%s)))\n'
+        result = '\n'
+
+        result += '\n        #self.fiveCardHands:\n'
+        result += lenTemplate % ('fiveCardHands', len(self.fiveCardHands))
+        for i in range(len(self.fiveCardHands)):
+            result += handsTemplate % ('fiveCardHands', i, self.__createCardDump(self.fiveCardHands[i].cards))
+
+        result += '\n        #self.threeKinds:\n'
+        result += lenTemplate % ('threeKinds', len(self.threeKinds))
+        for i in range(len(self.threeKinds)):
+            result += handsTemplate % ('threeKinds', i, self.__createCardDump(self.threeKinds[i].cards))
+
+        result += '\n        #self.pairs:\n'
+        result += lenTemplate % ('pairs', len(self.pairs))
+        for i in range(len(self.pairs)):
+            result += handsTemplate % ('pairs', i, self.__createCardDump(self.pairs[i].cards))
+
+        result += '\n        #self.highs:\n'
+        result += lenTemplate % ('highs', len(self.highs))
+        for i in range(len(self.highs)):
+            result += handsTemplate % ('highs', i, self.__createCardDump(self.highs[i].cards))
+
+        return result
+
+    def __createCardDump(self, cards):
+        return ', '.join ((str(card.suit) + ',' + str(card.num)) for card in cards)
 
     def deal(self, cards):
         Player.deal(self, cards)
@@ -55,10 +133,12 @@ class SimpleFelix(Player):
         self.__findAcePairs()
         self.__findFlush()
         self.__findStright()
-        self.__findHandsForKind()
         self.__findPairs()
         self.__findHighs()
+        self.__findSingleForFourKinds()
 
+        #self.__log.debug(self)
+        
 
     def play(self, playHistory):
         pass
@@ -99,7 +179,7 @@ class SimpleFelix(Player):
     def __findAllTwo(self):
         for card in self.cards:
             if card.num == 22:
-                self.__addToHands(self.highs, Hand(card))
+                self.__addToHands(self.highs, Hand([card]))
                 self.__removeFromCards(self.cards, [card])
 
     def __find4Kind(self):
@@ -124,7 +204,7 @@ class SimpleFelix(Player):
 
         for num in reversed(sorted(numDict.keys())):
             if len(numDict[num]) >= 3:
-                threeKinds.append(numDict[num][0:-1])
+                threeKinds.append(numDict[num][0:3])
 
         for num in sorted(numDict.keys()):
             if len(numDict[num]) == 2:
@@ -135,14 +215,14 @@ class SimpleFelix(Player):
 
         for i in range(len(threeKinds)):
             threeKind = threeKinds[i]
-            if i < len(paris):
-                pair = paris[i]
+            if i < len(pairs):
+                pair = pairs[i]
                 fullHouseHand = Hand(threeKind + pair)
                 self.__addToHands(self.fiveCardHands, fullHouseHand)
                 self.__removeFromCards(self.cards, fullHouseHand.cards)
             else:
                 threeKindHand = Hand(threeKind)
-                self.__addToHands(self.fiveCardHands, threeKindHand)
+                self.__addToHands(self.threeKinds, threeKindHand)
                 self.__removeFromCards(self.cards, threeKindHand.cards)
 
     def __findAcePairs(self):
@@ -166,23 +246,60 @@ class SimpleFelix(Player):
 
         for suit in suitDict.keys():
             if len(suitDict[suit]) >= 5:
+
                 cardsInSuit = suitDict[suit]
                 cardsInSuit.sort(key=lambda x: x.num)
                 flushHands = []
 
-                if len(suitDict[suit]) >= 10:
-                    flushHands.append(Hand(cardsInSuit[0:4] + cardsInSuit[-2:-1]))
-                    flushHands.append(Hand(cardsInSuit[4:8] + cardsInSuit[-1:]))
+                if len(cardsInSuit) == 10:
+                    self.__addToHands(self.fiveCardHands, Hand(cardsInSuit[0:4] + cardsInSuit[-2:-1]))
+                    self.__removeFromCards(self.cards, cardsInSuit[0:4] + cardsInSuit[-2:-1])
+                    self.__addToHands(self.fiveCardHands, Hand(cardsInSuit[4:8] + cardsInSuit[-1:]))
+                    self.__removeFromCards(self.cards, cardsInSuit[4:8] + cardsInSuit[-1:])
+                elif len(cardsInSuit) == 5:
+                    self.__addToHands(self.fiveCardHands, Hand(cardsInSuit[0:4] + cardsInSuit[-1:]))
+                    self.__removeFromCards(self.cards, cardsInSuit[0:4] + cardsInSuit[-1:])
                 else:
-                    print cardsInSuit[0:4] + cardsInSuit[-1:]
-                    flushHands.append(Hand(cardsInSuit[0:4] + cardsInSuit[-1:]))
+                    while len(cardsInSuit) >= 5:
+                        numStat = defaultdict(int)
+                        for card in self.cards:
+                            numStat[card.num] += 1
 
-                for flushHand in flushHands:
-                    self.__addToHands(self.fiveCardHands, flushHand)
-                    self.__removeFromCards(self.cards, flushHand.cards)
+                        strightCardsList = self.__findStrightContinues(self.__getUniqueNumCards(self.cards))
+
+                        numSet = Set()
+
+                        for strightCards in strightCardsList:
+                            for card in strightCards:
+                                numSet.add(card.num)
+
+                        okCards = []
+                        notPreferCards = []
+
+                        flushCards = cardsInSuit[-1:]
+                        cardsInSuit = cardsInSuit[0:-1]
+
+                        for card in cardsInSuit:
+                            if numStat[card.num] > 1 or card.num not in numSet:
+                                okCards.append(card)
+                            else:
+                                notPreferCards.append(card)
+                                
+                        for i in range(4):
+                            if okCards:
+                                addCard = okCards.pop(0)
+                                flushCards.append(addCard)
+                                cardsInSuit.remove(addCard)
+                            elif notPreferCards:
+                                addCard = notPreferCards.pop(0)
+                                flushCards.append(addCard)
+                                cardsInSuit.remove(addCard)
+
+                        self.__addToHands(self.fiveCardHands, Hand(flushCards))
+                        self.__removeFromCards(self.cards, flushCards)
 
     def __findStright(self):
-        strightCardsList = self.__findStrightContinues(self.__getUniqueNumCards(cards))
+        strightCardsList = self.__findStrightContinues(self.__getUniqueNumCards(self.cards))
 
         while strightCardsList:
             for strightCards in strightCardsList:
@@ -193,9 +310,9 @@ class SimpleFelix(Player):
                     while len(strightCards) >= 5:
                         self.__addToHands(self.fiveCardHands, Hand(strightCards[-5:]))
                         self.__removeFromCards(self.cards, strightCards[-5:])
-                        self.__removeFromCards(foundContinCards, strightCards[-5:])
+                        self.__removeFromCards(strightCards, strightCards[-5:])
 
-            strightCardsList = self.__findStrightContinues(self.__getUniqueNumCards(cards))
+            strightCardsList = self.__findStrightContinues(self.__getUniqueNumCards(self.cards))
 
     def __findPairs(self):
         numDict = defaultdict(list)
@@ -211,8 +328,8 @@ class SimpleFelix(Player):
     def __findHighs(self):
         for card in self.cards:
             self.__addToHands(self.highs, Hand([card]))
-            self.__removeFromCards(self.cards, [card])
-
+        
+        self.cards = []
 
     def __getUniqueNumCards(self, cards):
         numDict = defaultdict(list)
@@ -234,21 +351,20 @@ class SimpleFelix(Player):
 
         for fourKind in self.fourKindsTemp:
             singleCard = self.__grapSingleCardFromExistingHands()
-            self.__addToHands(self.fourKinds, Hand( fourKind + [singleCard]))
-
+            self.__addToHands(self.fiveCardHands, Hand( fourKind + [singleCard]))
 
     def __grapSingleCardFromExistingHands(self):
         if len(self.highs) > 0:
             singleCardHand = self.highs[0]
             singleCard = singleCardHand.cards[0]
-            self.highs.remove(singleCard)
+            self.highs.remove(singleCardHand)
             return singleCard
 
         if len(self.pairs) > 0:
             pairHand = self.pairs[0]
             singleCard = pairHand.cards[0]
-            self.__addToHands(self.highs, Hand(pairHand.cards[0]))
-            self.pairs.remove(singleCard)
+            self.__addToHands(self.highs, Hand([pairHand.cards[0]]))
+            self.pairs.remove(pairHand)
             return singleCard
 
         if len(self.threeKinds) > 0:
