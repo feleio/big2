@@ -28,11 +28,15 @@ class Player:
     def firstPlay(self):
         pass
 
+    def largestPlay(self):
+        pass
+
 class SimpleFelix(Player):
     __log = logging.getLogger( "common.simpleFelix" )
     def __init__(self):
         Player.__init__(self)
         self.highs = []
+        self.big2Highs = []
         self.pairs = []
         self.threeKinds = []
         self.fiveCardHands = []
@@ -46,6 +50,10 @@ class SimpleFelix(Player):
         result = '\n'
         result += '\nself.highs:\n'
         for hand in self.highs:
+            result +=  unicode(hand) + '\n'
+
+        result += '\nself.big2Highs:\n'
+        for hand in self.big2Highs:
             result +=  unicode(hand) + '\n'
 
         result += '\nself.pairs:\n'
@@ -85,6 +93,97 @@ class SimpleFelix(Player):
 
         return result
 
+    class AceBig2Memory:
+        __log = logging.getLogger( "common.simpleFelix" )
+        def __init__(self, haveCards):
+            self.cardDict = defaultdict(dict)
+            self.mustWinDict = defaultdict(dict)
+
+            for num in range(21,23):
+                for suit in range(1, 5):
+                    self.cardDict[num][suit] = False
+
+            for card in haveCards:
+                if card.num == 21 or card.num == 22:
+                    self.cardDict[card.num][card.suit] = True
+                    self.mustWinDict[card.num][card.suit] = False
+
+            self.__reCalHighsMustWin()
+
+        def __reCalHighsMustWin(self):
+            for num in range(21,23):
+                for suit in self.mustWinDict[num].keys():
+                    if not self.mustWinDict[num][suit] and self.__isAllWinCardAppeared(num, suit):
+                        self.mustWinDict[num][suit] = True
+
+        def __isAllWinCardAppeared(self, checkNum, checkSuit):
+            if checkNum == 21:
+                for suit in range(checkSuit+1,5):
+                    if not self.cardDict[21][suit]:
+                        return False
+
+                for suit in range(1,5):
+                    if not self.cardDict[22][suit]:
+                        return False
+
+            elif checkNum == 22:
+                for suit in range(checkSuit+1,5):
+                    if not self.cardDict[22][suit]:
+                        return False
+            else:
+                raise Exception('num must be 21 or 22')
+
+            return True
+
+        def remember(self, hand):
+            for card in hand.cards:
+                if card.num == 21 or card.num == 22:
+                    self.cardDict[card.num][card.suit] = True
+            self.__reCalHighsMustWin()
+
+        def isMustWin(self, hand):
+            if hand.cardCount == 1:
+                return self.mustWinDict[hand.cards[0].num][hand.cards[0].suit]
+            elif hand.cardCount == 2:
+                return self.__isPairMustWin(hand)
+            else:
+                raise Exception('check must win must be high or pair')
+
+        def __isPairMustWin(self, hand, ):
+            aceNotAppearCount = self.__notAppearCount(21)
+            big2NotAppearCount = self.__notAppearCount(22)
+
+            if hand.cards[0].num == 21:
+                return (self.__isLargerPair(hand) or aceNotAppearCount < 2 ) and big2NotAppearCount < 2
+            elif hand.cards[0].num == 22:
+                return self.__isLargerPair(hand) or big2NotAppearCount < 2
+            else:
+                raise Exception('check must win must be ace or big2')
+
+        def __is3KindMustWin(self, hand):
+            aceNotAppearCount = self.__notAppearCount(21)
+            big2NotAppearCount = self.__notAppearCount(22)
+
+            if hand.cards[0].num == 21:
+                return big2NotAppearCount < 3
+            elif hand.cards[0].num == 22:
+                return true
+            else:
+                raise Exception('check must win must be ace or big2')
+
+        def __notAppearCount(self, checkNum):
+            count = 0
+            for suit in range(1,5):
+                if self.cardDict[checkNum][suit] == False:
+                    count += 1
+            return count
+
+        def __isLargerPair(self, hand):
+            for card in hand.cards:
+                if card.suit == 4:  
+                    return True
+            return False
+
     def dumpTestAssert(self):
         lenTemplate = '        self.assertEquals(len(player.%s), %s )\n'
         handsTemplate = '        self.assertTrue(self.__checkCards(player.%s[%s].cards, self.__createCards(%s)))\n'
@@ -110,6 +209,11 @@ class SimpleFelix(Player):
         for i in range(len(self.highs)):
             result += handsTemplate % ('highs', i, self.__createCardDump(self.highs[i].cards))
 
+        result += '\n        #self.big2Highs:\n'
+        result += lenTemplate % ('big2Highs', len(self.big2Highs))
+        for i in range(len(self.big2Highs)):
+            result += handsTemplate % ('big2Highs', i, self.__createCardDump(self.big2Highs[i].cards))
+
         return result
 
     def __createCardDump(self, cards):
@@ -120,11 +224,20 @@ class SimpleFelix(Player):
         self.cards = cards[:]
 
         self.highs = []
+        self.big2Highs = []
         self.pairs = []
         self.threeKinds = []
         self.fiveCardHands = []
 
+        self.confidentHighs = []
+        self.confidentPairs = []
+        self.confidentthreeKinds = []
+        self.confidentFiveCardHands = []
+
         self.fourKindsTemp = []
+
+        self.isWinning = False
+        self.isPanic = False
 
         self.__findRFlush()
         self.__findAllTwo()
@@ -137,17 +250,174 @@ class SimpleFelix(Player):
         self.__findHighs()
         self.__findSingleForFourKinds()
 
+        self.aceBig2Memory = self.AceBig2Memory(hand.cards[0] for hand in self.big2Highs)
+
         #self.__log.debug(self)
         
-
     def play(self, playHistory):
-        pass
+        previousHands = playHistory[-3:]
+        for previousHand in previousHands:
+            if previousHand:
+                lasthand = playHistory[-1]
+
+        self.__cal(previousHands)
+
+        if lasthand.cardCount == 1:
+            handToPlay = self.__getJustWinHand(lasthand, self.highs, [])
+            if not handToPlay:
+                handToPlay = self.__getJustWinBig2(lasthand)
+        elif lasthand.cardCount == 2:
+            handToPlay = self.__getJustWinHand(lasthand, self.pairs, self.confidentPairs)
+        elif lasthand.cardCount == 3:
+            handToPlay = self.__getJustWinHand(lasthand, self.threeKinds, self.confidentthreeKinds)
+        elif lasthand.cardCount == 5:
+            handToPlay = self.__getJustWinHand(lasthand, self.fiveCardHands, self.confidentfiveCardHands)
+        else:
+            raise Exception('invalid hand')
+
+        self.__removeFromHolding(handToPlay)
+        return handToPlay
 
     def allPassPlay(self, playHistory):
-        pass
+        self.__cal(previousHands)
+
+        if self.isWinning:
+            if self.fiveCardHands:
+                handToPlay = self.__getConfidentHand(self.fiveCardHands, self.confidentfiveCardHands)
+            elif self.threeKinds:
+                handToPlay = self.__getConfidentHand(self.threeKinds, self.confidentthreeKinds)
+            elif self.pairs:
+                handToPlay = self.__getConfidentHand(self.pairs, self.confidentPairs)
+            elif self.big2Highs:
+                handToPlay = self.__getConfidentHand(self.big2Highs, self.confidentHighs)
+        else:
+            if self.fiveCardHands and self.fiveCardHands[0].fiveCardRank == 1:
+                handToPlay = self.fiveCardHands[0]
+            elif self.highs:
+                handToPlay = self.__getJustWinHand(None, self.highs, [])
+            elif self.big2Highs:
+                handToPlay = self.__getJustWinBig2(None)
+            elif self.pairs:
+                handToPlay = self.__getJustWinHand(None, self.pairs, self.confidentPairs)
+            elif self.threeKinds:
+                handToPlay = self.__getJustWinHand(None, self.threeKinds, self.confidentthreeKinds)
+            elif self.fiveCardHands:
+                handToPlay = self.__getJustWinHand(None, self.fiveCardHands, self.confidentfiveCardHands)
+
+        self.__removeFromHolding(handToPlay)
+        return handToPlay
 
     def firstPlay(self):
+            if self.fiveCardHands and self.fiveCardHands[0].fiveCardRank == 1:
+                handToPlay = self.fiveCardHands[0]
+            elif self.highs:
+                handToPlay = self.__getJustWinHand(None, self.highs, [])
+            elif self.pairs:
+                handToPlay = self.__getJustWinHand(None, self.pairs, self.confidentPairs)
+            elif self.threeKinds:
+                handToPlay = self.__getJustWinHand(None, self.threeKinds, self.confidentthreeKinds)
+            elif self.fiveCardHands:
+                handToPlay = self.__getJustWinHand(None, self.fiveCardHands, self.confidentfiveCardHands)
+
+    def largestPlay(self):
         pass
+
+    def __removeFromHolding(self, hand):
+        try:
+            for card in hand.cards:
+                self.holdingCards.remove(card)
+        except ValueError:
+            pass
+
+    def __cal(self, previousHands):
+        for hand in otherPlayedHands:
+            self.aceBig2Memory.remember(hand)
+
+        self.__markConfident()
+
+        #isWinning
+        holdingCount = len(self.highs)+len(self.big2Highs)+len(self.pairs)+len(self.threeKinds)+len(self.fiveCardHands)
+        confidentCount = len(self.confidentHighs)+len(self.confidentPairs)+len(self.confidentthreeKinds)+len(self.confidentFiveCardHands)
+
+        if holdingCount - confidentCount <= 1:
+            self.isWinning = True
+
+    def __markConfident(self):
+        for hand in reversed(self.big2Highs):
+            if hand not in self.confidentHighs and self.aceBig2Memory.isMustWin(hand):
+                self.confidentHighs.append(hand)
+            else:
+                break
+
+        for hand in reversed(self.pairs):
+            if hand.cards[0].num == 21 and hand not in self.confidentHighs and self.aceBig2Memory.isPairMustWin(hand):
+                self.confidentPairs.append(hand)
+            else:
+                break
+
+        for hand in reversed(self.threeKinds):
+            if hand not in self.confidentThreeKinds and hand.cards[0].num >= 12:
+                self.confidentthreeKinds.append(hand)
+            else:
+                break
+
+        for hand in reversed(self.fiveCardHands):
+            if ( hand not in self.confidentfiveCardHands and 
+                ((hand.fiveCardRank == 3 and hand.getFullHouseNum >= 11) or hand.fiveCardRank > 4 )):
+                self.confidentfiveCardHands.append(hand)
+            else:
+                break
+
+    def __getJustWinHand(self, lasthand, holdingHands, confidentHands):
+        if self.isWinning:
+            hands = confidentHands
+        else:
+            hands = holdingHands
+
+        playHand = None
+        for hand in hands:
+            if hand.win(lasthand) or not lasthand:
+                playHand = hand
+                break
+
+        if playHand:
+            try:
+                confidentHands.remove(playHand)
+            except ValueError:
+                pass
+            
+            holdingHands.remove(playHand)
+
+        return playHand
+
+    def __getJustWinBig2(self, lasthand):
+        if self.isWinning:
+            hands = self.confidentHighs
+        else:
+            hands = self.big2Highs[:-1]
+
+        playHand = None
+        for hand in hands:
+            if hand.win(lasthand) or not lasthand:
+                playHand = hand
+                break
+
+        if playHand:
+            try:
+                self.confidentHighs.remove(playHand)
+            except ValueError:
+                pass
+            self.big2Highs.remove(playHand)
+
+        return playHand
+
+    def __getConfidentHand(self, holdingHands, confidentHands):
+        playHand = confidentHands[0]
+
+        confidentHands.remove(playHand)
+        holdingHands.remove(playHand)
+
+        return playHand
 
     def __findRFlush(self):
         suitDict = defaultdict(list)
@@ -179,7 +449,7 @@ class SimpleFelix(Player):
     def __findAllTwo(self):
         for card in self.cards:
             if card.num == 22:
-                self.__addToHands(self.highs, Hand([card]))
+                self.__addToHands(self.big2Highs, Hand([card]))
                 self.__removeFromCards(self.cards, [card])
 
     def __find4Kind(self):

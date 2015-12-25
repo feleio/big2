@@ -215,6 +215,11 @@ class Hand:
             if numStat[i] == count:
                 return i
 
+    def getFullHouseNum(self):
+        if self.fiveCardRank == 3:
+            return self.__getSameKindNum(self.numStat, 3)
+        return 0
+
     def __getStraightRank(self, cards):
         if cards[3].num == 21 and cards[4].num == 22:
             return 16

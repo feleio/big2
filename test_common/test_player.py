@@ -212,18 +212,23 @@ class PlayerTestCase(unittest.TestCase):
 
         #self.fiveCardHands:
         self.assertEquals(len(player.fiveCardHands), 2 )
-        self.assertTrue(self.__checkCards(player.fiveCardHands[0].cards, self.__createCards(1,6, 3,6, 2,6, 4,6, 3,22)))
+        self.assertTrue(self.__checkCards(player.fiveCardHands[0].cards, self.__createCards(1,6, 3,6, 2,6, 4,6, 2,4)))
         self.assertTrue(self.__checkCards(player.fiveCardHands[1].cards, self.__createCards(4,21, 3,21, 2,21, 1,21, 4,4)))
 
         #self.threeKinds:
-        self.assertEquals(len(player.threeKinds), 1 )
-        self.assertTrue(self.__checkCards(player.threeKinds[0].cards, self.__createCards(2,4, 3,4, 1,4)))
+        self.assertEquals(len(player.threeKinds), 0 )
 
         #self.pairs:
-        self.assertEquals(len(player.pairs), 0 )
+        self.assertEquals(len(player.pairs), 1 )
+        self.assertTrue(self.__checkCards(player.pairs[0].cards, self.__createCards(3,4, 1,4)))
 
         #self.highs:
         self.assertEquals(len(player.highs), 0 )
+
+        #self.big2Highs:
+        self.assertEquals(len(player.big2Highs), 1 )
+        self.assertTrue(self.__checkCards(player.big2Highs[0].cards, self.__createCards(3,22)))
+
 
 
     def test_dealFullHouse(self):
@@ -249,9 +254,13 @@ class PlayerTestCase(unittest.TestCase):
         self.assertTrue(self.__checkCards(player.pairs[2].cards, self.__createCards(1,7, 3,7)))
 
         #self.highs:
-        self.assertEquals(len(player.highs), 2 )
+        self.assertEquals(len(player.highs), 1 )
         self.assertTrue(self.__checkCards(player.highs[0].cards, self.__createCards(2,5)))
-        self.assertTrue(self.__checkCards(player.highs[1].cards, self.__createCards(3,22)))
+
+        #self.big2Highs:
+        self.assertEquals(len(player.big2Highs), 1 )
+        self.assertTrue(self.__checkCards(player.big2Highs[0].cards, self.__createCards(3,22)))
+
 
     def test_dealTwoFullHouse(self):
         player = SimpleFelix()
@@ -323,10 +332,14 @@ class PlayerTestCase(unittest.TestCase):
         self.assertEquals(len(player.pairs), 0 )
 
         #self.highs:
-        self.assertEquals(len(player.highs), 3 )
+        self.assertEquals(len(player.highs), 2 )
         self.assertTrue(self.__checkCards(player.highs[0].cards, self.__createCards(3,7)))
         self.assertTrue(self.__checkCards(player.highs[1].cards, self.__createCards(3,13)))
-        self.assertTrue(self.__checkCards(player.highs[2].cards, self.__createCards(3,22)))    
+
+        #self.big2Highs:
+        self.assertEquals(len(player.big2Highs), 1 )
+        self.assertTrue(self.__checkCards(player.big2Highs[0].cards, self.__createCards(3,22)))
+ 
 
     def test_dealTwoFlushDiffSuit(self):
         player = SimpleFelix()
@@ -350,8 +363,12 @@ class PlayerTestCase(unittest.TestCase):
         self.assertTrue(self.__checkCards(player.pairs[0].cards, self.__createCards(1,3, 2,3)))
 
         #self.highs:
-        self.assertEquals(len(player.highs), 1 )
-        self.assertTrue(self.__checkCards(player.highs[0].cards, self.__createCards(2,22)))
+        self.assertEquals(len(player.highs), 0 )
+
+        #self.big2Highs:
+        self.assertEquals(len(player.big2Highs), 1 )
+        self.assertTrue(self.__checkCards(player.big2Highs[0].cards, self.__createCards(2,22)))
+
 
     def test_dealTwoFlushSameSuit(self):
         player = SimpleFelix()
@@ -359,13 +376,13 @@ class PlayerTestCase(unittest.TestCase):
 
         player.deal(cards)
         
-        # self.logger.debug(player.dumpTestAssert())
-        # self.logger.debug(player)
+        #self.logger.debug(player.dumpTestAssert())
+        #self.logger.debug(player)
 
         #self.fiveCardHands:
         self.assertEquals(len(player.fiveCardHands), 2 )
-        self.assertTrue(self.__checkCards(player.fiveCardHands[0].cards, self.__createCards(4,4, 4,5, 4,6, 4,8, 4,9)))
-        self.assertTrue(self.__checkCards(player.fiveCardHands[1].cards, self.__createCards(3,8, 3,10, 3,11, 3,12, 3,21)))
+        self.assertTrue(self.__checkCards(player.fiveCardHands[0].cards, self.__createCards(4,4, 4,5, 4,6, 4,8, 4,13)))
+        self.assertTrue(self.__checkCards(player.fiveCardHands[1].cards, self.__createCards(4,8, 4,9, 4,10, 4,11, 4,21)))
 
         #self.threeKinds:
         self.assertEquals(len(player.threeKinds), 0 )
@@ -375,8 +392,12 @@ class PlayerTestCase(unittest.TestCase):
         self.assertTrue(self.__checkCards(player.pairs[0].cards, self.__createCards(1,3, 2,3)))
 
         #self.highs:
-        self.assertEquals(len(player.highs), 1 )
-        self.assertTrue(self.__checkCards(player.highs[0].cards, self.__createCards(2,22)))
+        self.assertEquals(len(player.highs), 0 )
+
+        #self.big2Highs:
+        self.assertEquals(len(player.big2Highs), 1 )
+        self.assertTrue(self.__checkCards(player.big2Highs[0].cards, self.__createCards(2,22)))
+
 
     def test_dealFlushSkipForStright(self):
         player = SimpleFelix()
@@ -389,19 +410,23 @@ class PlayerTestCase(unittest.TestCase):
 
         #self.fiveCardHands:
         self.assertEquals(len(player.fiveCardHands), 2 )
-        self.assertTrue(self.__checkCards(player.fiveCardHands[0].cards, self.__createCards(4,4, 4,5, 4,6, 4,8, 4,9)))
-        self.assertTrue(self.__checkCards(player.fiveCardHands[1].cards, self.__createCards(3,8, 3,10, 3,11, 3,12, 3,21)))
+        self.assertTrue(self.__checkCards(player.fiveCardHands[0].cards, self.__createCards(1,8, 4,9, 2,10, 2,11, 1,12)))
+        self.assertTrue(self.__checkCards(player.fiveCardHands[1].cards, self.__createCards(4,3, 4,5, 4,6, 4,10, 4,21)))
 
         #self.threeKinds:
         self.assertEquals(len(player.threeKinds), 0 )
 
         #self.pairs:
-        self.assertEquals(len(player.pairs), 1 )
-        self.assertTrue(self.__checkCards(player.pairs[0].cards, self.__createCards(1,3, 2,3)))
+        self.assertEquals(len(player.pairs), 0 )
 
         #self.highs:
-        self.assertEquals(len(player.highs), 1 )
-        self.assertTrue(self.__checkCards(player.highs[0].cards, self.__createCards(2,22)))
+        self.assertEquals(len(player.highs), 2 )
+        self.assertTrue(self.__checkCards(player.highs[0].cards, self.__createCards(3,7)))
+        self.assertTrue(self.__checkCards(player.highs[1].cards, self.__createCards(3,12)))
+
+        #self.big2Highs:
+        self.assertEquals(len(player.big2Highs), 1 )
+        self.assertTrue(self.__checkCards(player.big2Highs[0].cards, self.__createCards(3,22)))
 
     def test_dealStright(self):
         player = SimpleFelix()
@@ -409,26 +434,136 @@ class PlayerTestCase(unittest.TestCase):
 
         player.deal(cards)
         
-        self.logger.debug(player.dumpTestAssert())
-        self.logger.debug(player)
+        #self.logger.debug(player.dumpTestAssert())
+        #self.logger.debug(player)
 
         #self.fiveCardHands:
-        self.assertEquals(len(player.fiveCardHands), 2 )
-        self.assertTrue(self.__checkCards(player.fiveCardHands[0].cards, self.__createCards(4,4, 4,5, 4,6, 4,8, 4,9)))
-        self.assertTrue(self.__checkCards(player.fiveCardHands[1].cards, self.__createCards(3,8, 3,10, 3,11, 3,12, 3,21)))
+        self.assertEquals(len(player.fiveCardHands), 1 )
+        self.assertTrue(self.__checkCards(player.fiveCardHands[0].cards, self.__createCards(3,9, 1,10, 4,11, 1,12, 1,13)))
 
         #self.threeKinds:
         self.assertEquals(len(player.threeKinds), 0 )
 
         #self.pairs:
-        self.assertEquals(len(player.pairs), 1 )
-        self.assertTrue(self.__checkCards(player.pairs[0].cards, self.__createCards(1,3, 2,3)))
+        self.assertEquals(len(player.pairs), 2 )
+        self.assertTrue(self.__checkCards(player.pairs[0].cards, self.__createCards(2,6, 3,6)))
+        self.assertTrue(self.__checkCards(player.pairs[1].cards, self.__createCards(1,21, 3,21)))
 
         #self.highs:
-        self.assertEquals(len(player.highs), 1 )
-        self.assertTrue(self.__checkCards(player.highs[0].cards, self.__createCards(2,22)))
+        self.assertEquals(len(player.highs), 3 )
+        self.assertTrue(self.__checkCards(player.highs[0].cards, self.__createCards(3,3)))
+        self.assertTrue(self.__checkCards(player.highs[1].cards, self.__createCards(4,8)))
+        self.assertTrue(self.__checkCards(player.highs[2].cards, self.__createCards(3,13)))
+
+        #self.big2Highs:
+        self.assertEquals(len(player.big2Highs), 1 )
+        self.assertTrue(self.__checkCards(player.big2Highs[0].cards, self.__createCards(1,22)))
 
 
+    # Test SimpleFelix.AceBig2Memory
+    def test_aceBig2Memory(self):
+        cards = self.__createCards(1,22, 3,22, 3,21)
+        aceBig2Memory = SimpleFelix.AceBig2Memory(cards)
+
+        self.assertFalse(aceBig2Memory.isMustWin(Hand([Card(3,21)])))
+        self.assertFalse(aceBig2Memory.isMustWin(Hand([Card(1,22)])))
+        self.assertFalse(aceBig2Memory.isMustWin(Hand([Card(3,22)])))
+
+        aceBig2Memory.remember(Hand([Card(4,22)]))
+
+        self.assertFalse(aceBig2Memory.isMustWin(Hand([Card(3,21)])))
+        self.assertFalse(aceBig2Memory.isMustWin(Hand([Card(1,22)])))
+        self.assertTrue(aceBig2Memory.isMustWin(Hand([Card(3,22)])))
+
+        aceBig2Memory.remember(Hand([Card(2,22)]))
+
+        self.assertFalse(aceBig2Memory.isMustWin(Hand([Card(3,21)])))
+        self.assertTrue(aceBig2Memory.isMustWin(Hand([Card(1,22)])))
+        self.assertTrue(aceBig2Memory.isMustWin(Hand([Card(3,22)])))
+
+        aceBig2Memory.remember(Hand([Card(1,21)]))
+
+        self.assertFalse(aceBig2Memory.isMustWin(Hand([Card(3,21)])))
+        self.assertTrue(aceBig2Memory.isMustWin(Hand([Card(1,22)])))
+        self.assertTrue(aceBig2Memory.isMustWin(Hand([Card(3,22)])))
+
+        aceBig2Memory.remember(Hand([Card(4,21)]))
+
+        self.assertTrue(aceBig2Memory.isMustWin(Hand([Card(3,21)])))
+        self.assertTrue(aceBig2Memory.isMustWin(Hand([Card(1,22)])))
+        self.assertTrue(aceBig2Memory.isMustWin(Hand([Card(3,22)])))
+
+    def test_aceBig2MemoryWithBiggest2(self):
+        cards = self.__createCards(1,22, 3,22, 4,22, 4,21)
+        aceBig2Memory = SimpleFelix.AceBig2Memory(cards)
+
+        self.assertFalse(aceBig2Memory.isMustWin(Hand([Card(4,21)])))
+        self.assertFalse(aceBig2Memory.isMustWin(Hand([Card(1,22)])))
+        self.assertTrue(aceBig2Memory.isMustWin(Hand([Card(3,22)])))
+        self.assertTrue(aceBig2Memory.isMustWin(Hand([Card(4,22)])))
+
+        aceBig2Memory.remember(Hand([Card(2,22)]))
+
+        self.assertTrue(aceBig2Memory.isMustWin(Hand([Card(4,21)])))
+        self.assertTrue(aceBig2Memory.isMustWin(Hand([Card(1,22)])))
+        self.assertTrue(aceBig2Memory.isMustWin(Hand([Card(3,22)])))
+        self.assertTrue(aceBig2Memory.isMustWin(Hand([Card(4,22)])))
+
+    def test_aceBig2MemoryWithAllAceBig2(self):
+        cards = self.__createCards(1,22, 3,22, 4,22, 2,22, 1,21, 3,21, 4,21, 2,21)
+        aceBig2Memory = SimpleFelix.AceBig2Memory(cards)
+
+        self.assertTrue(aceBig2Memory.isMustWin(Hand([Card(1,21)])))
+        self.assertTrue(aceBig2Memory.isMustWin(Hand([Card(2,21)])))
+        self.assertTrue(aceBig2Memory.isMustWin(Hand([Card(3,21)])))
+        self.assertTrue(aceBig2Memory.isMustWin(Hand([Card(4,21)])))
+        self.assertTrue(aceBig2Memory.isMustWin(Hand([Card(1,22)])))
+        self.assertTrue(aceBig2Memory.isMustWin(Hand([Card(2,22)])))
+        self.assertTrue(aceBig2Memory.isMustWin(Hand([Card(3,22)])))
+        self.assertTrue(aceBig2Memory.isMustWin(Hand([Card(4,22)])))
+
+    def test_aceBig2MemoryIsAcePairMustWin(self):
+        cards = self.__createCards(1,22, 3,22, 3,21, 2,21)
+        aceBig2Memory = SimpleFelix.AceBig2Memory(cards)
+
+        self.assertFalse(aceBig2Memory.isMustWin(Hand(self.__createCards(3,21, 2,21))))
+
+        aceBig2Memory.remember(Hand([Card(4,22)]))
+
+        self.assertFalse(aceBig2Memory.isMustWin(Hand(self.__createCards(3,21, 2,21))))
+
+        aceBig2Memory.remember(Hand([Card(4,21)]))
+
+        self.assertTrue(aceBig2Memory.isMustWin(Hand(self.__createCards(3,21, 2,21))))
+
+    def test_aceBig2MemoryIsBig2PairMustWin(self):
+        cards = self.__createCards(1,22, 3,22, 3,21, 2,21)
+        aceBig2Memory = SimpleFelix.AceBig2Memory(cards)
+
+        self.assertFalse(aceBig2Memory.isMustWin(Hand(self.__createCards(1,22, 3,22))))
+
+        aceBig2Memory.remember(Hand([Card(4,22)]))
+
+        self.assertTrue(aceBig2Memory.isMustWin(Hand(self.__createCards(1,22, 3,22))))
+
+        aceBig2Memory.remember(Hand([Card(4,21)]))
+
+        self.assertTrue(aceBig2Memory.isMustWin(Hand(self.__createCards(1,22, 3,22))))
+
+
+    def test_aceBig2MemoryIsBiggest2PairMustWin(self):
+        cards = self.__createCards(1,22, 4,22, 3,21, 2,21)
+        aceBig2Memory = SimpleFelix.AceBig2Memory(cards)
+
+        self.assertTrue(aceBig2Memory.isMustWin(Hand(self.__createCards(1,22, 4,22))))
+
+        aceBig2Memory.remember(Hand([Card(4,22)]))
+
+        self.assertTrue(aceBig2Memory.isMustWin(Hand(self.__createCards(1,22, 4,22))))
+
+        aceBig2Memory.remember(Hand([Card(4,21)]))
+
+        self.assertTrue(aceBig2Memory.isMustWin(Hand(self.__createCards(1,22, 4,22))))
 
     def __checkCards(self, actualCards, expectedCards):
         if len(actualCards) != len(expectedCards):
