@@ -48,48 +48,76 @@ class SimpleFelix(Player):
 
     def __unicode__(self):
         result = '\n'
-        result += '\nself.highs:\n'
-        for hand in self.highs:
-            result +=  unicode(hand) + '\n'
+        if self.isWinning:
+            result += 'winning mode\n'
 
-        result += '\nself.big2Highs:\n'
-        for hand in self.big2Highs:
-            result +=  unicode(hand) + '\n'
+        if self.highs:
+            result += 'self.highs:\n'
+            for hand in self.highs:
+                result +=  unicode(hand) + '\n'
 
-        result += '\nself.pairs:\n'
-        for hand in self.pairs:
-            result +=  unicode(hand) + '\n'
+        if self.big2Highs:
+            result += 'self.big2Highs:\n'
+            for hand in self.big2Highs:
+                result +=  unicode(hand) + '\n'
 
-        result += '\nself.threeKinds:\n'
-        for hand in self.threeKinds:
-            result +=  unicode(hand) + '\n'
+        if self.pairs:
+            result += 'self.pairs:\n'
+            for hand in self.pairs:
+                result +=  unicode(hand) + '\n'
+
+        if self.threeKinds:
+            result += 'self.threeKinds:\n'
+            for hand in self.threeKinds:
+                result +=  unicode(hand) + '\n'
             
-        result += '\nself.fiveCardHands:\n'
-        for hand in self.fiveCardHands:
-            result +=  unicode(hand) + '\n'
-            
-        result += '\ncards:\n'
-        result +=  ', '.join(unicode(x) for x in self.cards) + '\n'
+        if self.fiveCardHands:
+            result += 'self.fiveCardHands:\n'
+            for hand in self.fiveCardHands:
+                result +=  unicode(hand) + '\n'
+
+
+        if self.confidentHighs:
+            result += 'self.confidentHighs:\n'
+            for hand in self.confidentHighs:
+                result +=  unicode(hand) + '\n'            
+        if self.confidentPairs:
+            result += 'self.confidentPairs:\n'
+            for hand in self.confidentPairs:
+                result +=  unicode(hand) + '\n'            
+        if self.confidentThreeKinds:
+            result += 'self.confidentThreeKinds:\n'
+            for hand in self.confidentThreeKinds:
+                result +=  unicode(hand) + '\n'            
+        if self.confidentFiveCardHands:
+            result += 'self.confidentFiveCardHands:\n'
+            for hand in self.confidentFiveCardHands:
+                result +=  unicode(hand) + '\n'
+
+        # result += '\ncards:\n'
+        # result +=  ', '.join(unicode(x) for x in self.cards) + '\n'
 
         result += '\nholding cards:\n'
         result +=  ', '.join(unicode(x) for x in self.holdingCards) + '\n'
 
-        result += '\ncards Stat:\n'
 
-        suitDict = defaultdict(list)
-        numDict = defaultdict(list)
 
-        for card in self.holdingCards:
-            suitDict[card.suit].append(card)
-            numDict[card.num].append(card)
+        # result += '\ncards Stat:\n'
 
-        result += '\nsuit Stat:\n'
-        for suit in range (1,5):
-            result += '%s : %s' % (suit , unicode(', '.join(unicode(x) for x in suitDict[suit])))  + '\n'
+        # suitDict = defaultdict(list)
+        # numDict = defaultdict(list)
 
-        result += '\nnum Stat:\n'
-        for num in sorted(numDict.keys()):
-            result += '%s : %s' % (num, ', '.join(unicode(x) for x in numDict[num])) + '\n'
+        # for card in self.holdingCards:
+        #     suitDict[card.suit].append(card)
+        #     numDict[card.num].append(card)
+
+        # result += '\nsuit Stat:\n'
+        # for suit in range (1,5):
+        #     result += '%s : %s' % (suit , unicode(', '.join(unicode(x) for x in suitDict[suit])))  + '\n'
+
+        # result += '\nnum Stat:\n'
+        # for num in sorted(numDict.keys()):
+        #     result += '%s : %s' % (num, ', '.join(unicode(x) for x in numDict[num])) + '\n'
 
         return result
 
@@ -192,31 +220,31 @@ class SimpleFelix(Player):
         result += '\n        #self.fiveCardHands:\n'
         result += lenTemplate % ('fiveCardHands', len(self.fiveCardHands))
         for i in range(len(self.fiveCardHands)):
-            result += handsTemplate % ('fiveCardHands', i, self.__createCardDump(self.fiveCardHands[i].cards))
+            result += handsTemplate % ('fiveCardHands', i, self.createCardDump(self.fiveCardHands[i].cards))
 
         result += '\n        #self.threeKinds:\n'
         result += lenTemplate % ('threeKinds', len(self.threeKinds))
         for i in range(len(self.threeKinds)):
-            result += handsTemplate % ('threeKinds', i, self.__createCardDump(self.threeKinds[i].cards))
+            result += handsTemplate % ('threeKinds', i, self.createCardDump(self.threeKinds[i].cards))
 
         result += '\n        #self.pairs:\n'
         result += lenTemplate % ('pairs', len(self.pairs))
         for i in range(len(self.pairs)):
-            result += handsTemplate % ('pairs', i, self.__createCardDump(self.pairs[i].cards))
+            result += handsTemplate % ('pairs', i, self.createCardDump(self.pairs[i].cards))
 
         result += '\n        #self.highs:\n'
         result += lenTemplate % ('highs', len(self.highs))
         for i in range(len(self.highs)):
-            result += handsTemplate % ('highs', i, self.__createCardDump(self.highs[i].cards))
+            result += handsTemplate % ('highs', i, self.createCardDump(self.highs[i].cards))
 
         result += '\n        #self.big2Highs:\n'
         result += lenTemplate % ('big2Highs', len(self.big2Highs))
         for i in range(len(self.big2Highs)):
-            result += handsTemplate % ('big2Highs', i, self.__createCardDump(self.big2Highs[i].cards))
+            result += handsTemplate % ('big2Highs', i, self.createCardDump(self.big2Highs[i].cards))
 
         return result
 
-    def __createCardDump(self, cards):
+    def createCardDump(self, cards):
         return ', '.join ((str(card.suit) + ',' + str(card.num)) for card in cards)
 
     def deal(self, cards):
@@ -231,7 +259,7 @@ class SimpleFelix(Player):
 
         self.confidentHighs = []
         self.confidentPairs = []
-        self.confidentthreeKinds = []
+        self.confidentThreeKinds = []
         self.confidentFiveCardHands = []
 
         self.fourKindsTemp = []
@@ -256,9 +284,11 @@ class SimpleFelix(Player):
         
     def play(self, playHistory):
         previousHands = playHistory[-3:]
-        for previousHand in previousHands:
+
+        for previousHand in reversed(previousHands):
             if previousHand:
-                lasthand = playHistory[-1]
+                lasthand = previousHand
+                break
 
         self.__cal(previousHands)
 
@@ -269,9 +299,9 @@ class SimpleFelix(Player):
         elif lasthand.cardCount == 2:
             handToPlay = self.__getJustWinHand(lasthand, self.pairs, self.confidentPairs)
         elif lasthand.cardCount == 3:
-            handToPlay = self.__getJustWinHand(lasthand, self.threeKinds, self.confidentthreeKinds)
+            handToPlay = self.__getJustWinHand(lasthand, self.threeKinds, self.confidentThreeKinds)
         elif lasthand.cardCount == 5:
-            handToPlay = self.__getJustWinHand(lasthand, self.fiveCardHands, self.confidentfiveCardHands)
+            handToPlay = self.__getJustWinHand(lasthand, self.fiveCardHands, self.confidentFiveCardHands)
         else:
             raise Exception('invalid hand')
 
@@ -279,13 +309,15 @@ class SimpleFelix(Player):
         return handToPlay
 
     def allPassPlay(self, playHistory):
+        previousHands = playHistory[-3:]
         self.__cal(previousHands)
 
+        handToPlay = None
         if self.isWinning:
             if self.fiveCardHands:
-                handToPlay = self.__getConfidentHand(self.fiveCardHands, self.confidentfiveCardHands)
+                handToPlay = self.__getConfidentHand(self.fiveCardHands, self.confidentFiveCardHands)
             elif self.threeKinds:
-                handToPlay = self.__getConfidentHand(self.threeKinds, self.confidentthreeKinds)
+                handToPlay = self.__getConfidentHand(self.threeKinds, self.confidentThreeKinds)
             elif self.pairs:
                 handToPlay = self.__getConfidentHand(self.pairs, self.confidentPairs)
             elif self.big2Highs:
@@ -293,51 +325,61 @@ class SimpleFelix(Player):
         else:
             if self.fiveCardHands and self.fiveCardHands[0].fiveCardRank == 1:
                 handToPlay = self.fiveCardHands[0]
-            elif self.highs:
-                handToPlay = self.__getJustWinHand(None, self.highs, [])
-            elif self.big2Highs:
-                handToPlay = self.__getJustWinBig2(None)
-            elif self.pairs:
-                handToPlay = self.__getJustWinHand(None, self.pairs, self.confidentPairs)
-            elif self.threeKinds:
-                handToPlay = self.__getJustWinHand(None, self.threeKinds, self.confidentthreeKinds)
-            elif self.fiveCardHands:
-                handToPlay = self.__getJustWinHand(None, self.fiveCardHands, self.confidentfiveCardHands)
+            if not handToPlay and self.highs:
+                handToPlay = self.__getNonConfidentHand(self.highs, [])
+            if not handToPlay and self.pairs:
+                handToPlay = self.__getNonConfidentHand(self.pairs, self.confidentPairs)
+            if not handToPlay and self.threeKinds:
+                handToPlay = self.__getNonConfidentHand(self.threeKinds, self.confidentThreeKinds)
+            if not handToPlay and self.fiveCardHands:
+                handToPlay = self.__getNonConfidentHand(self.fiveCardHands, self.confidentFiveCardHands)
+            if not handToPlay and self.big2Highs:
+                handToPlay = self.__getNonConfidentHand(self.big2Highs, self.confidentHighs)
+            if not handToPlay:
+                raise Exception('all pass play must play a card')
 
         self.__removeFromHolding(handToPlay)
         return handToPlay
 
     def firstPlay(self):
-            if self.fiveCardHands and self.fiveCardHands[0].fiveCardRank == 1:
-                handToPlay = self.fiveCardHands[0]
-            elif self.highs:
-                handToPlay = self.__getJustWinHand(None, self.highs, [])
-            elif self.pairs:
-                handToPlay = self.__getJustWinHand(None, self.pairs, self.confidentPairs)
-            elif self.threeKinds:
-                handToPlay = self.__getJustWinHand(None, self.threeKinds, self.confidentthreeKinds)
-            elif self.fiveCardHands:
-                handToPlay = self.__getJustWinHand(None, self.fiveCardHands, self.confidentfiveCardHands)
+        handToPlay = None
+        if self.fiveCardHands and self.fiveCardHands[0].fiveCardRank == 1:
+            handToPlay = self.fiveCardHands[0]
+        if not handToPlay and self.highs:
+            handToPlay = self.__getNonConfidentHand(self.highs, [])
+        if not handToPlay and self.pairs:
+            handToPlay = self.__getNonConfidentHand(self.pairs, self.confidentPairs)
+        if not handToPlay and self.threeKinds:
+            handToPlay = self.__getNonConfidentHand(self.threeKinds, self.confidentThreeKinds)
+        if not handToPlay and self.fiveCardHands:
+            handToPlay = self.__getNonConfidentHand(self.fiveCardHands, self.confidentFiveCardHands)
+        if not handToPlay:
+                raise Exception('first play must play a card')
+
+        self.__removeFromHolding(handToPlay)
+        return handToPlay
 
     def largestPlay(self):
         pass
 
     def __removeFromHolding(self, hand):
-        try:
-            for card in hand.cards:
-                self.holdingCards.remove(card)
-        except ValueError:
-            pass
+        if hand != None:
+            try:
+                for card in hand.cards:
+                    self.holdingCards.remove(card)
+            except ValueError:
+                pass
 
     def __cal(self, previousHands):
-        for hand in otherPlayedHands:
-            self.aceBig2Memory.remember(hand)
+        for hand in previousHands:
+            if hand:
+                self.aceBig2Memory.remember(hand)
 
         self.__markConfident()
 
         #isWinning
         holdingCount = len(self.highs)+len(self.big2Highs)+len(self.pairs)+len(self.threeKinds)+len(self.fiveCardHands)
-        confidentCount = len(self.confidentHighs)+len(self.confidentPairs)+len(self.confidentthreeKinds)+len(self.confidentFiveCardHands)
+        confidentCount = len(self.confidentHighs)+len(self.confidentPairs)+len(self.confidentThreeKinds)+len(self.confidentFiveCardHands)
 
         if holdingCount - confidentCount <= 1:
             self.isWinning = True
@@ -357,18 +399,18 @@ class SimpleFelix(Player):
 
         for hand in reversed(self.threeKinds):
             if hand not in self.confidentThreeKinds and hand.cards[0].num >= 12:
-                self.confidentthreeKinds.append(hand)
+                self.confidentThreeKinds.append(hand)
             else:
                 break
 
         for hand in reversed(self.fiveCardHands):
-            if ( hand not in self.confidentfiveCardHands and 
-                ((hand.fiveCardRank == 3 and hand.getFullHouseNum >= 11) or hand.fiveCardRank > 4 )):
-                self.confidentfiveCardHands.append(hand)
+            if ( hand not in self.confidentFiveCardHands and 
+                ((hand.fiveCardRank == 3 and hand.getFullHouseNum() >= 11) or hand.fiveCardRank > 4 )):
+                self.confidentFiveCardHands.append(hand)
             else:
                 break
 
-    def __getJustWinHand(self, lasthand, holdingHands, confidentHands):
+    def __getJustWinHand(self, lastHand, holdingHands, confidentHands):
         if self.isWinning:
             hands = confidentHands
         else:
@@ -376,7 +418,7 @@ class SimpleFelix(Player):
 
         playHand = None
         for hand in hands:
-            if hand.win(lasthand) or not lasthand:
+            if lastHand == None or hand.win(lastHand):
                 playHand = hand
                 break
 
@@ -390,7 +432,7 @@ class SimpleFelix(Player):
 
         return playHand
 
-    def __getJustWinBig2(self, lasthand):
+    def __getJustWinBig2(self, lastHand):
         if self.isWinning:
             hands = self.confidentHighs
         else:
@@ -398,7 +440,7 @@ class SimpleFelix(Player):
 
         playHand = None
         for hand in hands:
-            if hand.win(lasthand) or not lasthand:
+            if lastHand == None or hand.win(lastHand):
                 playHand = hand
                 break
 
@@ -412,10 +454,21 @@ class SimpleFelix(Player):
         return playHand
 
     def __getConfidentHand(self, holdingHands, confidentHands):
-        playHand = confidentHands[0]
+        playHand = None
+        if confidentHands:
+            playHand = confidentHands[0]
 
-        confidentHands.remove(playHand)
-        holdingHands.remove(playHand)
+            confidentHands.remove(playHand)
+            holdingHands.remove(playHand)
+
+        return playHand
+
+    def __getNonConfidentHand(self, holdingHands, confidentHands):
+        playHand = None
+        if holdingHands and holdingHands[0] not in confidentHands:
+            playHand = holdingHands[0]
+
+            holdingHands.remove(playHand)
 
         return playHand
 
@@ -447,10 +500,14 @@ class SimpleFelix(Player):
 
 
     def __findAllTwo(self):
+        cardToAdd = []
         for card in self.cards:
             if card.num == 22:
-                self.__addToHands(self.big2Highs, Hand([card]))
-                self.__removeFromCards(self.cards, [card])
+                cardToAdd.append(card)
+
+        for card in cardToAdd:
+            self.__addToHands(self.big2Highs, Hand([card]))
+            self.__removeFromCards(self.cards, [card])
 
     def __find4Kind(self):
         numDict = defaultdict(list)
